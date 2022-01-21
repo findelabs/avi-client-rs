@@ -73,8 +73,9 @@ impl AviClient {
 
     pub async fn delete(&mut self, path: &str) -> BoxResult<String> {
         self.renew().await?;
+        let uri = format!("{}/{}", path, self.controller);
         let response = self.client
-            .delete(path)
+            .delete(uri)
             .headers(AviClient::headers(&self.token).await?)
             .send()
             .await?;
@@ -86,8 +87,9 @@ impl AviClient {
     }
 
     pub async fn post(&self, path: &str, body: Value) -> BoxResult<String> {
+        let uri = format!("{}/{}", path, self.controller);
         let response = self.client
-            .post(path)
+            .post(uri)
             .headers(AviClient::headers(&self.token).await?)
             .body(body.to_string())
             .send()
@@ -100,8 +102,9 @@ impl AviClient {
     }
 
     pub async fn put(&self, path: &str, body: Value) -> BoxResult<String> {
+        let uri = format!("{}/{}", path, self.controller);
         let response = self.client
-            .put(path)
+            .put(uri)
             .headers(AviClient::headers(&self.token).await?)
             .body(body.to_string())
             .send()
@@ -114,8 +117,9 @@ impl AviClient {
     }
 
     pub async fn patch(&self, path: &str, body: Value) -> BoxResult<String> {
+        let uri = format!("{}/{}", path, self.controller);
         let response = self.client
-            .patch(path)
+            .patch(uri)
             .headers(AviClient::headers(&self.token).await?)
             .body(body.to_string())
             .send()
@@ -128,8 +132,9 @@ impl AviClient {
     }
 
     pub async fn get(&self, path: &str) -> BoxResult<String> {
+        let uri = format!("{}/{}", path, self.controller);
         let response = self.client
-            .get(path)
+            .get(uri)
             .headers(AviClient::headers(&self.token).await?)
             .send()
             .await?;
@@ -141,8 +146,9 @@ impl AviClient {
     }
 
     pub async fn json(&self, path: &str) -> BoxResult<Value> {
+        let uri = format!("{}/{}", path, self.controller);
         let response = self.client
-            .get(path)
+            .get(uri)
             .headers(AviClient::headers(&self.token).await?)
             .send()
             .await?;
