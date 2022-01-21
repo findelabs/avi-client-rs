@@ -146,7 +146,8 @@ impl AviClient {
     }
 
     pub async fn json(&self, path: &str) -> BoxResult<Value> {
-        let uri = format!("{}/{}", path, self.controller);
+        let uri = format!("{}/{}", path, self.controller.clone());
+        log::info!("Getting json output from {}", &uri);
         let response = self.client
             .get(uri)
             .headers(AviClient::headers(&self.token).await?)
