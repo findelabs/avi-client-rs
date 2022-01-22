@@ -86,7 +86,7 @@ impl AviClient {
 
     pub async fn delete(&mut self, path: &str) -> BoxResult<String> {
         self.renew().await?;
-        let uri = format!("{}/{}", path, self.controller);
+        let uri = format!("{}/{}", self.controller, path);
         let response = self.client
             .delete(uri)
             .headers(self.headers().await?)
@@ -100,7 +100,7 @@ impl AviClient {
     }
 
     pub async fn post(&self, path: &str, body: Value) -> BoxResult<String> {
-        let uri = format!("{}/{}", path, self.controller);
+        let uri = format!("{}{}", self.controller, path);
         let response = self.client
             .post(uri)
             .headers(self.headers().await?)
@@ -115,7 +115,7 @@ impl AviClient {
     }
 
     pub async fn put(&self, path: &str, body: Value) -> BoxResult<String> {
-        let uri = format!("{}/{}", path, self.controller);
+        let uri = format!("{}{}", self.controller, path);
         let response = self.client
             .put(uri)
             .headers(self.headers().await?)
@@ -130,7 +130,7 @@ impl AviClient {
     }
 
     pub async fn patch(&self, path: &str, body: Value) -> BoxResult<String> {
-        let uri = format!("{}/{}", path, self.controller);
+        let uri = format!("{}/{}", self.controller, path);
         let response = self.client
             .patch(uri)
             .headers(self.headers().await?)
@@ -145,7 +145,7 @@ impl AviClient {
     }
 
     pub async fn get(&self, path: &str) -> BoxResult<String> {
-        let uri = format!("{}/{}", path, self.controller);
+        let uri = format!("{}{}", path, self.controller);
         let response = self.client
             .get(uri)
             .headers(self.headers().await?)
@@ -160,7 +160,7 @@ impl AviClient {
 
     pub async fn get_json(&self, path: &str) -> BoxResult<Vec<Value>> {
         log::info!("Getting {}", &path);
-        let uri = format!("{}/{}", self.controller.clone(), path);
+        let uri = format!("{}{}", self.controller, path);
         let vec = Vec::new();
         self.json_recursive(&uri, vec).await
     }
