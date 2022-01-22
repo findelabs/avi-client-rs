@@ -36,7 +36,7 @@ impl AviClient {
         let client = reqwest::Client::builder()
             .timeout(Duration::new(timeout, 0))
             .cookie_store(true)
-            .danger_accept_invalid_certs(opts.value_of("insecure").unwrap().parse()?)
+            .danger_accept_invalid_certs(opts.is_present("insecure"))
             .build()
             .expect("Failed to build client");
 
