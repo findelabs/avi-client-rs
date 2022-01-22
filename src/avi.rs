@@ -17,9 +17,9 @@ pub struct AviClient {
     session_expires: i64,
     username: String,
     password: String,
-    controller: String,
-    tenant: String,
-    version: String,
+    pub controller: String,
+    pub tenant: String,
+    pub version: String,
     token: String,
     session: String
 }
