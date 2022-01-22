@@ -130,7 +130,7 @@ impl AviClient {
     }
 
     pub async fn patch(&self, path: &str, body: Value) -> BoxResult<String> {
-        let uri = format!("{}/{}", self.controller, path);
+        let uri = format!("{}{}", self.controller, path);
         let response = self.client
             .patch(uri)
             .headers(self.headers().await?)
