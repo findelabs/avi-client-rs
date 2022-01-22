@@ -278,6 +278,8 @@ impl AviClient {
         let mut headers = HeaderMap::new();
 
         log::debug!("Using X-CSRFToken of {}", &self.token);
+        log::debug!("Using X-Avi-Tenant of {}", &self.tenant);
+        log::debug!("Using X-Avi-Version of {}", &self.version);
 
         // Add all headers
         headers.insert("X-Avi-Version", HeaderValue::from_str(&self.version).unwrap());
