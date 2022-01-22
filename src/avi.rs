@@ -27,8 +27,14 @@ pub struct AviClient {
 impl AviClient {
     pub async fn new(opts: ArgMatches<'_>) -> BoxResult<Self> {
 
+        // Set timeout
+        let timeout: u64 = opts.value_of("timeout").unwrap().parse().unwrap_or_else(|_| {
+            eprintln!("Supplied timeout not in range, defaulting to 60");
+            60
+        });
+
         let client = reqwest::Client::builder()
-            .timeout(Duration::new(60, 0))
+            .timeout(Duration::new(timeout, 0))
             .cookie_store(true)
             .danger_accept_invalid_certs(opts.value_of("insecure").unwrap().parse()?)
             .build()
