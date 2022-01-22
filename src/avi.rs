@@ -159,14 +159,14 @@ impl AviClient {
     }
 
     pub async fn get_json(&self, path: &str) -> BoxResult<Vec<Value>> {
-        log::info!("Getting {}", &path);
+        log::debug!("get_json {}", &path);
         let uri = format!("{}{}", self.controller, path);
         let vec = Vec::new();
         self.json_recursive(&uri, vec).await
     }
 
     pub async fn json(&self, uri: &str) -> BoxResult<Value> {
-        log::info!("Getting json output from {}", &uri);
+        log::debug!("Getting json output from {}", &uri);
         let response = self.client
             .get(uri)
             .headers(self.headers().await?)
@@ -181,7 +181,7 @@ impl AviClient {
 
     #[async_recursion]
     pub async fn json_recursive(&self, path: &str, mut vec: Vec<Value>) -> BoxResult<Vec<Value>> {
-        log::info!("Getting: {}", &path);
+        log::debug!("json_recursive: {}", &path);
         let json = self.json(path).await?;
         let next = json["next"].as_str();
 
