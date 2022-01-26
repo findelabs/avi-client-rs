@@ -335,6 +335,8 @@ impl AviClient {
             drop(cookies);
             log::info!("session has expired, kicking off re-login function");
 //            self.login().await?;
+        } else {
+            log::debug!("Session and token are current");
         }
         Ok(())
     }
