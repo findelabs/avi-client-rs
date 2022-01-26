@@ -99,7 +99,8 @@ impl AviClient {
         }
     }
 
-    pub async fn post(&self, path: &str, body: Value) -> BoxResult<String> {
+    pub async fn post(&mut self, path: &str, body: Value) -> BoxResult<String> {
+        self.renew().await?;
         let uri = format!("{}{}", self.controller, path);
         let response = self.client
             .post(uri)
@@ -114,7 +115,8 @@ impl AviClient {
         }
     }
 
-    pub async fn put(&self, path: &str, body: Value) -> BoxResult<String> {
+    pub async fn put(&mut self, path: &str, body: Value) -> BoxResult<String> {
+        self.renew().await?;
         let uri = format!("{}{}", self.controller, path);
         let response = self.client
             .put(uri)
@@ -129,7 +131,8 @@ impl AviClient {
         }
     }
 
-    pub async fn patch(&self, path: &str, body: Value) -> BoxResult<String> {
+    pub async fn patch(&mut self, path: &str, body: Value) -> BoxResult<String> {
+        self.renew().await?;
         let uri = format!("{}{}", self.controller, path);
         let response = self.client
             .patch(uri)
@@ -144,7 +147,8 @@ impl AviClient {
         }
     }
 
-    pub async fn get(&self, path: &str) -> BoxResult<String> {
+    pub async fn get(&mut self, path: &str) -> BoxResult<String> {
+        self.renew().await?;
         let uri = format!("{}{}", path, self.controller);
         let response = self.client
             .get(uri)
@@ -158,7 +162,8 @@ impl AviClient {
         }
     }
 
-    pub async fn get_json(&self, path: &str) -> BoxResult<Vec<Value>> {
+    pub async fn get_json(&mut self, path: &str) -> BoxResult<Vec<Value>> {
+        self.renew().await?;
         log::debug!("get_json {}", &path);
         let uri = format!("{}{}", self.controller, path);
         let vec = Vec::new();
@@ -309,10 +314,10 @@ impl AviClient {
 
     async fn renew(&mut self) -> BoxResult<()> {
         if self.token_expires - Utc::now().timestamp() <= 0 {
-            log::info!("renew function kicking off re-login function");
+            log::info!("token has expired, kicking off re-login function");
             self.login().await?;
         } else if self.session_expires - Utc::now().timestamp() <= 0 {
-            log::info!("renew function kicking off re-login function");
+            log::info!("session has expired, kicking off re-login function");
             self.login().await?;
         }
         Ok(())
