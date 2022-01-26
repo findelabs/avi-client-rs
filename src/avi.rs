@@ -330,11 +330,11 @@ impl AviClient {
         if cookies.token_expires - Utc::now().timestamp() <= 0 {
             drop(cookies);
             log::info!("token has expired, kicking off re-login function");
-            self.login().await?;
+//            self.login().await?;
         } else if cookies.session_expires - Utc::now().timestamp() <= 0 {
             drop(cookies);
             log::info!("session has expired, kicking off re-login function");
-            self.login().await?;
+//            self.login().await?;
         }
         Ok(())
     }
