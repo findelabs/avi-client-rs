@@ -325,16 +325,23 @@ impl AviClient {
         Ok(newdate.to_string())
     }
 
-    async fn renew(&mut self) -> BoxResult<()> {
+    async fn token_expires(&self) -> BoxResult<i64> {
         let cookies = self.cookies.read().expect("Failed reading cookies");
-        if cookies.token_expires - Utc::now().timestamp() <= 0 {
-            drop(cookies);
+        Ok(cookies.token_expires)
+    }
+
+    async fn session_expires(&self) -> BoxResult<i64> {
+        let cookies = self.cookies.read().expect("Failed reading cookies");
+        Ok(cookies.session_expires)
+    }
+
+    async fn renew(&mut self) -> BoxResult<()> {
+        if self.token_expires().await? - Utc::now().timestamp() <= 0 {
             log::info!("token has expired, kicking off re-login function");
-//            self.login().await?;
-        } else if cookies.session_expires - Utc::now().timestamp() <= 0 {
-            drop(cookies);
+            self.login().await?;
+        } else if self.session_expires().await? - Utc::now().timestamp() <= 0 {
             log::info!("session has expired, kicking off re-login function");
-//            self.login().await?;
+            self.login().await?;
         } else {
             log::debug!("Session and token are current");
         }
