@@ -155,7 +155,7 @@ impl AviClient {
     }
 
     pub async fn get(&self, path: &str) -> BoxResult<String> {
-        self.clone().renew().await?;
+//        self.renew().await?;
         let uri = format!("{}{}", path, self.controller);
         let response = self.client
             .get(uri)
@@ -170,7 +170,7 @@ impl AviClient {
     }
 
     pub async fn get_json(&mut self, path: &str) -> BoxResult<Vec<Value>> {
-        self.renew().await?;
+//        self.renew().await?;
         log::debug!("get_json {}", &path);
         let uri = format!("{}{}", self.controller, path);
         let vec = Vec::new();
