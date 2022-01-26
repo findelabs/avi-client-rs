@@ -7,19 +7,25 @@ use chrono::NaiveDateTime;
 use chrono::DateTime;
 use serde_json::Value;
 use async_recursion::async_recursion;
+use std::sync::{Arc, RwLock};
 
 type BoxResult<T> = Result<T,Box<dyn Error + Send + Sync>>;
 
 #[derive(Debug, Clone)]
 pub struct AviClient {
     client: reqwest::Client,
-    token_expires: i64,
-    session_expires: i64,
     username: String,
     password: String,
     pub controller: String,
     pub tenant: String,
     pub version: String,
+    cookies: Arc<RwLock<AviCookies>>
+}
+
+#[derive(Debug, Clone)]
+pub struct AviCookies {
+    token_expires: i64,
+    session_expires: i64,
     token: String,
     session: String
 }
@@ -80,7 +86,8 @@ impl AviClient {
 
         let token_expires = Utc::now().timestamp() + token_max_age as i64;
         let session_expires = Utc::now().timestamp() + session_max_age as i64;
-        Ok(Self { client, token_expires, session_expires, username, password, controller, session, token, tenant, version })
+        let cookies = Arc::new(RwLock::new(AviCookies{ token_expires, session_expires, session, token }));
+        Ok(Self { client, username, password, controller, tenant, version, cookies })
 
     }
 
@@ -147,8 +154,8 @@ impl AviClient {
         }
     }
 
-    pub async fn get(&mut self, path: &str) -> BoxResult<String> {
-        self.renew().await?;
+    pub async fn get(&self, path: &str) -> BoxResult<String> {
+        self.clone().renew().await?;
         let uri = format!("{}{}", path, self.controller);
         let response = self.client
             .get(uri)
@@ -238,23 +245,26 @@ impl AviClient {
             None => ("error".to_string(), 0u64)
         };
 
-        match token == self.token {
+        // Check out cookies
+        let mut cookies = self.cookies.write().expect("Failed getting write access to cookies");
+
+        match token == cookies.token {
             true => log::info!("csrf token is the same as before..."),
             false => { 
                 log::info!("Picked up new csrf token");
                 log::debug!("Registered crsf token: {}", &token);
-                self.token = token;
+                cookies.token = token;
             }
         };
 
         // Update max_age for new token
         let new_token_expires = Utc::now().timestamp() + token_max_age as i64;
         let new_session_expires = Utc::now().timestamp() + session_max_age as i64;
-        self.token_expires = new_token_expires;
-        self.session_expires = new_session_expires;
-        self.session = session;
+        cookies.token_expires = new_token_expires;
+        cookies.session_expires = new_session_expires;
+        cookies.session = session;
 
-        Ok(self.token_expires.to_string())
+        Ok(cookies.token_expires.to_string())
     }
 
     pub async fn default_headers(version: &str, tenant: &str) -> BoxResult<HeaderMap> {
@@ -279,17 +289,19 @@ impl AviClient {
     }
 
     pub async fn headers(&self) -> BoxResult<HeaderMap> {
+        let cookies = self.cookies.read().expect("Failed reading cookies");
+
         // Create HeaderMap
         let mut headers = HeaderMap::new();
 
-        log::debug!("Using X-CSRFToken of {}", &self.token);
+        log::debug!("Using X-CSRFToken of {}", cookies.token);
         log::debug!("Using X-Avi-Tenant of {}", &self.tenant);
         log::debug!("Using X-Avi-Version of {}", &self.version);
 
         // Add all headers
         headers.insert("X-Avi-Version", HeaderValue::from_str(&self.version).unwrap());
         headers.insert("X-Avi-Tenant", HeaderValue::from_str(&self.tenant).unwrap());
-        headers.insert("X-CSRFToken", HeaderValue::from_str(&self.token).unwrap());
+        headers.insert("X-CSRFToken", HeaderValue::from_str(&cookies.token).unwrap());
         headers.insert(USER_AGENT, HeaderValue::from_str("hyper-rs").unwrap());
         headers.insert(
             CONTENT_TYPE,
@@ -305,18 +317,22 @@ impl AviClient {
     }
 
     // Return back the time in UTC that the cookie will expire
-    pub fn expires(&self) -> String {
-        let naive = NaiveDateTime::from_timestamp(self.token_expires, 0);
+    pub fn expires(&self) -> BoxResult<String> {
+        let cookies = self.cookies.read().expect("Failed reading cookies");
+        let naive = NaiveDateTime::from_timestamp(cookies.token_expires, 0);
         let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
         let newdate = datetime.format("%Y-%m-%d %H:%M:%S");
-        newdate.to_string()
+        Ok(newdate.to_string())
     }
 
     async fn renew(&mut self) -> BoxResult<()> {
-        if self.token_expires - Utc::now().timestamp() <= 0 {
+        let cookies = self.cookies.read().expect("Failed reading cookies");
+        if cookies.token_expires - Utc::now().timestamp() <= 0 {
+            drop(cookies);
             log::info!("token has expired, kicking off re-login function");
             self.login().await?;
-        } else if self.session_expires - Utc::now().timestamp() <= 0 {
+        } else if cookies.session_expires - Utc::now().timestamp() <= 0 {
+            drop(cookies);
             log::info!("session has expired, kicking off re-login function");
             self.login().await?;
         }
