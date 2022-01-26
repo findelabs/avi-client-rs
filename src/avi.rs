@@ -139,7 +139,7 @@ impl AviClient {
     }
 
     pub async fn patch(&mut self, path: &str, body: Value) -> BoxResult<String> {
-//        self.renew().await?;
+        self.renew().await?;
         let uri = format!("{}{}", self.controller, path);
         let response = self.client
             .patch(uri)
@@ -154,8 +154,8 @@ impl AviClient {
         }
     }
 
-    pub async fn get(&self, path: &str) -> BoxResult<String> {
-//        self.renew().await?;
+    pub async fn get(&mut self, path: &str) -> BoxResult<String> {
+        self.renew().await?;
         let uri = format!("{}{}", path, self.controller);
         let response = self.client
             .get(uri)
