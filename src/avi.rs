@@ -170,7 +170,7 @@ impl AviClient {
     }
 
     pub async fn get_json(&mut self, path: &str) -> BoxResult<Vec<Value>> {
-//        self.renew().await?;
+        self.login().await?;
         log::debug!("get_json {}", &path);
         let uri = format!("{}{}", self.controller, path);
         let vec = Vec::new();
